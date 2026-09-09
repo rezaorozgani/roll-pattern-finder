@@ -262,31 +262,37 @@ function toggleAdd(){
 
 function saveRecord(){
 
- const value=document.getElementById("newRecord").value;
+  const value = document.getElementById("newRecord").value;
+  const winner = document.getElementById("winner").value;
 
- const parsed=parse(value);
+  const parsed = parse(value);
 
- if(!parsed){
-   alert("Enter exactly 7 numbers separated by dots.");
-   return;
- }
+  if(!parsed){
+    alert("Enter exactly 7 numbers separated by commas.");
+    return;
+  }
 
- const data=records();
+  if(!winner){
+    alert("SELECT WINNER FIRST");
+    return;
+  }
 
- data.push({
-   key:makeKey(parsed),
-   three:parsed.three,
-   five:parsed.five,
-   winner:document.getElementById("winner").value
- });
+  const data = records();
 
- save(data);
+  data.push({
+    key: makeKey(parsed),
+    three: parsed.three,
+    five: parsed.five,
+    winner: winner
+  });
 
- document.getElementById("newRecord").value="";
+  save(data);
 
- document.getElementById("addPanel").style.display="none";
+  document.getElementById("newRecord").value = "";
+  document.getElementById("winner").value = "";
+  document.getElementById("addPanel").style.display = "none";
 
- alert("Saved");
+  alert("Saved");
 }
 
 function clearSearch(){
