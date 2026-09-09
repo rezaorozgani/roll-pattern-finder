@@ -170,7 +170,7 @@ function normalize(arr){
 
 function parse(value){
 
- const p=value.trim().split(".").filter(Boolean);
+ const p=value.trim().split(",").filter(Boolean);
 
  if(p.length!==7) return null;
  if(!p.every(x=>/^\d{1,2}$/.test(x))) return null;
