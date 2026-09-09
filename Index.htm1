@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Roll Pattern Finder</title>
+
+<style>
+body{
+  margin:0;
+  background:#0d1117;
+  color:white;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app{
+  max-width:600px;
+  margin:auto;
+  padding:25px 18px;
+}
+h1{
+  font-size:28px;
+  margin-bottom:8px;
+}
+.info{
+  color:#aeb6c2;
+  margin-bottom:18px;
+}
+input{
+  width:100%;
+  box-sizing:border-box;
+  background:#151b23;
+  border:1px solid #394150;
+  color:white;
+  border-radius:14px;
+  padding:16px;
+  font-size:23px;
+  outline:none;
+}
+.example{
+  color:#89929f;
+  font-size:13px;
+  margin-top:8px;
+}
+.result{
+  margin-top:22px;
+  border-radius:16px;
+  padding:28px 20px;
+  text-align:center;
+  font-size:34px;
+  font-weight:800;
+}
+.ready{background:#20262f;color:#bbc3ce}
+.three{background:#146c35}
+.five{background:#1557a8}
+.nobet{background:#982b2b}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:20px;
+}
+button{
+  border:0;
+  border-radius:13px;
+  padding:14px 8px;
+  font-size:15px;
+  font-weight:700;
+}
+.add{background:#238636;color:white}
+.clear{background:#30363d;color:white}
+
+.panel{
+  margin-top:15px;
+  background:#161b22;
+  padding:16px;
+  border-radius:15px;
+  display:none;
+}
+select{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  font-size:17px;
+}
+.save{
+  width:100%;
+  margin-top:10px;
+  background:#238636;
+  color:white;
+}
+.count{
+  text-align:center;
+  color:#8b949e;
+  margin-top:18px;
+  font-size:13px;
+}
+.note{
+  margin-top:25px;
+  color:#6e7681;
+  text-align:center;
+  font-size:11px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<h1>Roll Pattern Finder</h1>
+
+<div class="info">
+Enter 7 numbers (3 Rolls + 5 Rolls)
+</div>
+
+<input
+ id="search"
+ inputmode="decimal"
+ autocomplete="off"
+ placeholder="1.34.56.7.8.60.3">
+
+<div class="example">
+Example: 1.34.56.7.8.60.3
+</div>
+
+<div id="result" class="result ready">
+READY
+</div>
+
+<div class="actions">
+<button class="add" onclick="toggleAdd()">+ Add Record</button>
+<button class="clear" onclick="clearSearch()">Clear</button>
+</div>
+
+<div id="addPanel" class="panel">
+
+<input
+ id="newRecord"
+ inputmode="decimal"
+ placeholder="1.34.56.7.8.60.3">
+
+<select id="winner">
+<option value="3">3 ROLLS</option>
+<option value="5">5 ROLLS</option>
+</select>
+
+<button class="save" onclick="saveRecord()">
+Save Record
+</button>
+
+</div>
+
+<div id="count" class="count"></div>
+
+<div class="note">
+Matches only patterns stored by you. It does not guarantee future game results.
+</div>
+
+</div>
+
+<script>
+
+const KEY="rollPatternsV1";
+
+function normalize(arr){
+ return arr.map(Number).sort((a,b)=>a-b);
+}
+
+function parse(value){
+
+ const p=value.trim().split(".").filter(Boolean);
+
+ if(p.length!==7) return null;
+ if(!p.every(x=>/^\d{1,2}$/.test(x))) return null;
+
+ return{
+   three:normalize(p.slice(0,3)),
+   five:normalize(p.slice(3,7))
+ };
+}
+
+function makeKey(data){
+ return data.three.join("-")+"|"+data.five.join("-");
+}
+
+function records(){
+ try{
+   return JSON.parse(localStorage.getItem(KEY)||"[]");
+ }catch{
+   return[];
+ }
+}
+
+function save(data){
+ localStorage.setItem(KEY,JSON.stringify(data));
+ updateCount();
+}
+
+function search(){
+
+ const field=document.getElementById("search");
+ const result=document.getElementById("result");
+
+ const parsed=parse(field.value);
+
+ result.className="result ready";
+
+ if(!field.value){
+   result.textContent="READY";
+   return;
+ }
+
+ if(!parsed){
+   result.textContent="ENTER 7 NUMBERS";
+   return;
+ }
+
+ const key=makeKey(parsed);
+
+ const found=records().filter(r=>r.key===key);
+
+ if(!found.length){
+   result.textContent="NO BET";
+   result.className="result nobet";
+   return;
+ }
+
+ const winners=[...new Set(found.map(x=>x.winner))];
+
+ if(winners.length!==1){
+   result.textContent="CHECK";
+   return;
+ }
+
+ if(winners[0]==="3"){
+   result.textContent="3 ROLLS";
+   result.className="result three";
+ }else{
+   result.textContent="5 ROLLS";
+   result.className="result five";
+ }
+}
+
+document.getElementById("search")
+.addEventListener("input",function(){
+
+ this.value=this.value.replace(/[^\d.]/g,"");
+
+ search();
+});
+
+function toggleAdd(){
+
+ const p=document.getElementById("addPanel");
+
+ p.style.display=
+ p.style.display==="block"?"none":"block";
+}
+
+function saveRecord(){
+
+ const value=document.getElementById("newRecord").value;
+
+ const parsed=parse(value);
+
+ if(!parsed){
+   alert("Enter exactly 7 numbers separated by dots.");
+   return;
+ }
+
+ const data=records();
+
+ data.push({
+   key:makeKey(parsed),
+   three:parsed.three,
+   five:parsed.five,
+   winner:document.getElementById("winner").value
+ });
+
+ save(data);
+
+ document.getElementById("newRecord").value="";
+
+ document.getElementById("addPanel").style.display="none";
+
+ alert("Saved");
+}
+
+function clearSearch(){
+
+ document.getElementById("search").value="";
+
+ search();
+
+ document.getElementById("search").focus();
+}
+
+function updateCount(){
+
+ document.getElementById("count").textContent=
+ records().length+" records stored on this device";
+}
+
+updateCount();
+
+</script>
+</body>
+</html>
